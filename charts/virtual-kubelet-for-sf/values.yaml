@@ -1,0 +1,4 @@
+image:
+  repository: hbai/virtual-kubelet
+  tag: latest
+  pullPolicy: Always

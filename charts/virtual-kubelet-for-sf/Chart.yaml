@@ -1,0 +1,8 @@
+name: virtual-kubelet-for-sf
+version: 0.0.1
+description: a Helm chart to install virtual kubelet in an Azure Service Fabric cluster.
+source:
+  - https://github.com/virtual-kubelet/virtual-kubelet
+maintainers:
+  - name: Haishi Bai
+    email: hbai@microsoft.com
