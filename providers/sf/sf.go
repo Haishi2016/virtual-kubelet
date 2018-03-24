@@ -9,6 +9,10 @@ import (
   "os"
   "k8s.io/apimachinery/pkg/api/resource"
   metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+  "net/http"
+  "gopkg.in/yaml.v2"
+  "strings"
+  "strconv"
 )
 
 type SFProvider struct {
@@ -40,6 +44,23 @@ func (p *SFProvider) CreatePod(pod *v1.Pod) error {
      return err
    }
    p.pods[key] = pod
+   egg, err := parsePod(pod)
+   if err !=  nil {
+     return err
+   }
+   
+   payload,err := yaml.Marshal(egg)
+   if err != nil {
+     return err
+   }
+
+   content := string(payload)
+
+   client := &http.Client{}
+   r, _ := http.NewRequest("POST", "http://localhost:8000/run", strings.NewReader(content))
+   r.Header.Add("Content-Type", "text/yaml")
+   r.Header.Add("Content-Length", strconv.Itoa(len(content)))
+   _, _ = client.Do(r)
    return nil
 }
 
@@ -209,4 +230,24 @@ func buildKey(pod *v1.Pod) (string, error) {
 
 func buildKeyFromNames(namespace string, name string) (string, error) {
   return fmt.Sprintf("%s-%s", namespace, name), nil
+}
+
+func parsePod(pod *v1.Pod) (Egg, error) {
+  egg:= Egg{Name:pod.ObjectMeta.Labels["app"]}
+  for _, container := range pod.Spec.Containers {
+    service := Service{
+      Name: container.Name,
+      Src: container.Image}
+
+    for _, e := range container.Env {
+      service.EnvironmentVariables = append(service.EnvironmentVariables, EnvironmentVariable{Name: e.Name, Value: e.Value})
+    }
+    egg.Services = append(egg.Services, service)
+    endpoint := Endpoint {Name: container.Name, Service: container.Name}
+    for _, p := range container.Ports {
+      endpoint.Ports = append(endpoint.Ports, Port{Port: p.ContainerPort})
+    }
+    egg.Mesh.Endpoints = append(egg.Mesh.Endpoints, endpoint)
+  }
+  return egg, nil
 }
