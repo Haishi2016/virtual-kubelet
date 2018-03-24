@@ -12,6 +12,7 @@ import (
 
 	"github.com/virtual-kubelet/virtual-kubelet/manager"
 	"github.com/virtual-kubelet/virtual-kubelet/providers/azure"
+	"github.com/virtual-kubelet/virtual-kubelet/providers/sf"
 	"github.com/virtual-kubelet/virtual-kubelet/providers/hypersh"
 	"github.com/virtual-kubelet/virtual-kubelet/providers/mock"
 	"github.com/virtual-kubelet/virtual-kubelet/providers/web"
@@ -92,6 +93,11 @@ func New(nodeName, operatingSystem, namespace, kubeConfig, taint, provider, prov
 		}
 	case "mock":
 		p, err = mock.NewMockProvider(nodeName, operatingSystem, internalIP, daemonEndpointPort)
+		if err != nil {
+			return nil, err
+		}
+	case "sf":
+		p, err = sf.NewSFProvider(providerConfig, rm, nodeName, operatingSystem, internalIP, daemonEndpointPort)
 		if err != nil {
 			return nil, err
 		}

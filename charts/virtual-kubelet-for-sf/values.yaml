@@ -2,3 +2,7 @@ image:
   repository: hbai/virtual-kubelet
   tag: latest
   pullPolicy: Always
+env:
+  nodeName:
+  nodeTaint:
+  nodeOsType:
