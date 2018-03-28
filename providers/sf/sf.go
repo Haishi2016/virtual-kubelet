@@ -35,7 +35,7 @@ func NewSFProvider(config string, rm *manager.ResourceManager, nodeName, operati
 }
 
 func (p *SFProvider) CreatePod(pod *v1.Pod) error {
-   log.Printf("receive CreatePod %v \n", pod)
+   log.Printf("receive CreatePod %q \n", pod.Name)
    log.Printf("MY_POD_NAME=%s\n",os.Getenv("MY_POD_NAME"))
    log.Printf("MY_POD_NAMESPACE=%s\n", os.Getenv("MY_POD_NAMESPACE"))
    log.Printf("VKUBELET_POD_ID=%s\n", os.Getenv("VKUBELET_POD_ID"))
@@ -55,9 +55,9 @@ func (p *SFProvider) CreatePod(pod *v1.Pod) error {
    }
 
    content := string(payload)
-
+   log.Printf("Sending payload: %s \n", content)
    client := &http.Client{}
-   r, _ := http.NewRequest("POST", "http://localhost:8000/run", strings.NewReader(content))
+   r, _ := http.NewRequest("POST", "http://40.65.108.247:8000/run", strings.NewReader(content))
    r.Header.Add("Content-Type", "text/yaml")
    r.Header.Add("Content-Length", strconv.Itoa(len(content)))
    _, _ = client.Do(r)
@@ -76,7 +76,7 @@ func (p *SFProvider) UpdatePod(pod *v1.Pod) error {
 }
 
 func (p *SFProvider) DeletePod(pod *v1.Pod) error {
-  log.Printf("receive DeletedPod %v \n", pod)
+  log.Printf("receive DeletedPod %q \n", pod.Name)
 
   key, err := buildKey(pod)
   if err != nil {
@@ -95,7 +95,6 @@ func (p *SFProvider) GetPod(namespace, name string) (*v1.Pod, error) {
   }
 
   if pod, ok := p.pods[key]; ok {
-    log.Printf(" returning: %v \n", p.pods[key])
     return pod, nil
   }
   return nil, nil
@@ -143,7 +142,6 @@ func (p *SFProvider) GetPods() ([]*v1.Pod, error) {
   var pods []*v1.Pod
 
   for _, pod := range p.pods {
-	  log.Printf("adding %v \n", pod)
 	  pods = append(pods, pod)
   }
   return pods,nil
@@ -233,10 +231,11 @@ func buildKeyFromNames(namespace string, name string) (string, error) {
 }
 
 func parsePod(pod *v1.Pod) (Egg, error) {
-  egg:= Egg{Name:pod.ObjectMeta.Labels["app"]}
+  egg:= Egg{Name:"hello-sf"}
   for _, container := range pod.Spec.Containers {
     service := Service{
       Name: container.Name,
+      Replicas: 1,
       Src: container.Image}
 
     for _, e := range container.Env {
@@ -245,7 +244,7 @@ func parsePod(pod *v1.Pod) (Egg, error) {
     egg.Services = append(egg.Services, service)
     endpoint := Endpoint {Name: container.Name, Service: container.Name}
     for _, p := range container.Ports {
-      endpoint.Ports = append(endpoint.Ports, Port{Port: p.ContainerPort})
+	    endpoint.Ports = append(endpoint.Ports, Port{Port: p.ContainerPort, Name: container.Name, Protocol: "http"})
     }
     egg.Mesh.Endpoints = append(egg.Mesh.Endpoints, endpoint)
   }
