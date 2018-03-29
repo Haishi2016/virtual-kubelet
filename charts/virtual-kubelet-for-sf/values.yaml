@@ -2,7 +2,12 @@ image:
   repository: hbai/virtual-kubelet
   tag: latest
   pullPolicy: Always
+sfNodes:
+  - appnode0
+  - appnode1
+  - appnode2
+  - appnode3
+  - appnode4
 env:
-  nodeName:
   nodeTaint:
   nodeOsType:

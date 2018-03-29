@@ -3,16 +3,17 @@ kind: Deployment
 metadata:
   name: {{ template "fullname" . }}
 spec:
-  replica: 1
+  replica: 1 
   template:
     metadata:
       labels:
-        app: {{ template "fullname" . }}
+        app: {{ template "fullname" $ }}
     spec:
       containers:
-        - name: {{ template "fullname" . }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{- range .Values.sfNodes }}
+        - name: {{ . }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
           env: 
             - name: MY_POD_NAME
               valueFrom:
@@ -29,4 +30,5 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
           command: ["virtual-kubelet"]
-          args: ["--provider", "sf", "--namespace", "default", "--nodename", {{ default "sf-node" .Values.env.nodeName | quote }} , "--os", {{ default "Linux" .Values.env.nodeOsType | quote }}, "--taint", {{ default "azure.com/sf" .Values.env.nodeTaint | quote }}]
+          args: ["--provider", "sf", "--namespace", "default", "--nodename", {{ . | quote }} , "--os", {{ default "Linux" $.Values.env.nodeOsType | quote }}, "--taint", {{ default "azure.com/sf" $.Values.env.nodeTaint | quote }}]
+        {{- end }}
